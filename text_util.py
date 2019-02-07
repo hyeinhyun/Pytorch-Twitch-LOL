@@ -6,6 +6,7 @@ import torch
 import glob
 import unicodedata
 import string
+import numpy as np
 
 all_letters = string.printable
 n_letters = len(all_letters)
@@ -50,9 +51,15 @@ def lineToTensor(line):
 
 # Turn multiple lines into a <bathc_size x line_length x n_letters>
 def linesToTensor(lines):
-    line_length = max([ len(line) for line in lines]) 
+    line_length = 15000
+    if max([ len(line) for line in lines]) < line_length:
+        line_length = max( [len(line) for line in lines] )
+    #line_length = max( [len(line) for line in lines] )
+    #xx = [max(len(line)-15000,0) for line in lines]
+    #print float(np.sum(xx)) / float(np.sum([len(line) for line in lines]))
     tensor = torch.zeros(len(lines), line_length, n_letters)
     for b, line in enumerate(lines): 
+        line = line[:15000]
         for li, letter in enumerate(line):
             tensor[b][li + line_length - len(line)][letterToIndex(letter)] = 1
 

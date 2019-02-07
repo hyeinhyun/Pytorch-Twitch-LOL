@@ -21,19 +21,34 @@ from twitch_data_loader import *
 from models import *
 
 parser = argparse.ArgumentParser(description='PyTorch Video Summary')
+#parser.add_argument('--train_data_path', dest='train_data_path',
+#                    help='Directory contains the training images',
+#                    default='./EMNLP17_Twitch_LOL',
+#                    type=str, metavar='PATH')
+
 parser.add_argument('--train_data_path', dest='train_data_path',
                     help='Directory contains the training images',
-                    default='./EMNLP17_Twitch_LOL',
+                    default='./ONEHOT',
                     type=str, metavar='PATH')
+
+#parser.add_argument('--train_annFile', dest='train_ann',
+#                    help='List file contains location of images and labels',
+#                    default='./nalcs_train.txt',
+#                    type=str, metavar='PATH')
+
+#parser.add_argument('--val_annFile', dest='val_ann',
+#                    help='List file contains location of images and labels',
+#                    default='./EMNLP17_Twitch_LOL/nalcs_val.txt',
+#                    type=str, metavar='PATH')
 
 parser.add_argument('--train_annFile', dest='train_ann',
                     help='List file contains location of images and labels',
-                    default='./nalcs_train.txt',
+                    default='./ONEHOT/nalcs_train.txt',
                     type=str, metavar='PATH')
 
 parser.add_argument('--val_annFile', dest='val_ann',
                     help='List file contains location of images and labels',
-                    default='./EMNLP17_Twitch_LOL/nalcs_val.txt',
+                    default='./ONEHOT/nalcs_test.txt',
                     type=str, metavar='PATH')
 
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
@@ -54,8 +69,9 @@ parser.add_argument('--print-freq', '-p', default=10, type=int,
                     metavar='N', help='print frequency (default: 10)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
-parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
-                    help='evaluate model on validation set')
+
+parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',help='evaluate model on validation set')
+
 parser.add_argument('--visualize', dest='visualize', action='store_true',
                     help='Visualize the prediction')
 parser.add_argument('--threshold', default=0.6, type=float,
@@ -204,12 +220,12 @@ def train(train_loader, model, optimizer, criterion, epoch):
 
         label = label
         label_var = Variable(label).cuda()
-        print(text)
+
+
         if args.word :
             text = text_util.word_linesToTensor(text, train_loader.dataset.corpus)
         else:
             text = text_util.linesToTensor(text)
-        print text
         text_var = Variable(text)
 
         if args.model == 'vision' :
@@ -298,12 +314,12 @@ def val(val_loader, model):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        if it > 1000:
-
+        if it > 10:
             if it % args.print_freq == 0 and pred_sum >0 and gt_sum >0:
-                precision = correct_sum / float(pred_sum)
-                recall = correct_sum / float(gt_sum)
-                f1 = (2*precision*recall / (precision + recall))
+                precision = correct_sum / float(pred_sum) + 1e-40
+                recall = correct_sum / float(gt_sum) + 1e-40
+                f1 = (2*precision*recall / (precision + recall)) * 100
+                print('correct, pred, gt', correct_sum, pred_sum, gt_sum)
                 print('[{}/{}], prec:{}, recall:{}, f1:{}'.format(it, len(val_loader), precision, recall, f1))
         else :
             if it % args.print_freq == 0:
@@ -342,11 +358,11 @@ def adjust_learning_rate(optimizer, epoch):
 
 
 def fmeasure(output, target):
-
     _, pred = output.topk(1, 1, True, True)
-    pred = pred.view(1,-1)
-    target = target.view(1,-1)
+    pred = pred.view(-1,1)
+    target = target.view(-1,1)
     overlap = ((pred== 1) + (target == 1)).gt(1)
+    overlap = overlap.view(-1,1)
 
     overlap_len = overlap.data.long().sum()
     pred_len = pred.data.long().sum()

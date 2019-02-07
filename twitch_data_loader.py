@@ -72,20 +72,20 @@ class Twitch(data.Dataset):
         for line in lines:
             line = line.strip('\n')
             segs = line.split(' ')
-            print('=>Load Video', segs)
+            #print('=>Load Video', segs)
             assert(len(segs) == 3)
             segs = [ os.path.join(self.root, seg) for seg in segs ]
 
             video_list.append(segs[0])
-            cap = FFMPEG_VideoReader(segs[0])
-            cap.initialize()
+            #cap = FFMPEG_VideoReader(segs[0])
+            #cap.initialize()
             #video_list.append(cap)
-            print('Video: frames({})'.format(int(cap.nframes)))
+            #print('Video: frames({})'.format(int(cap.nframes)))
             # Load text json file
             text = json.load(open(segs[1]))
             # Load GT json file
             gt   = np.load(open(segs[2]))
-            print('Gt : frames({})'.format(len(gt)))
+            #print('Gt : frames({})'.format(len(gt)))
             text_list.append(text)
             gt_list.append(gt)
             
